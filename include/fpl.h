@@ -18,6 +18,7 @@ enum TokenType {
     TOKEN_RPAREN,
     TOKEN_EOF,
     TOKEN_NL,
+    TOKEN_EQ,
 };
 
 struct Token {

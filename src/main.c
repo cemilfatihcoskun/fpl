@@ -43,6 +43,12 @@ int main(int argc, char** argv) {
             continue;
         }
 
+        if (token.type == TOKEN_EOF) {
+            putchar('\n');
+            continue;
+        }
+
+
         int res = parse_L();
         if (token.type != TOKEN_NL && token.type != TOKEN_EOF) {
             fpl_error.type = ERROR_INCORRECT_GRAMMAR;

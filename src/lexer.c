@@ -103,6 +103,9 @@ void token_print(struct Token tok) {
     case TOKEN_NL:
         printf("TOKEN_NL\n");
         break;
+    case TOKEN_EQ:
+        printf("TOKEN_EQ\n");
+        break;
     default:
         printf("TOKEN_LPAREN\n");
         break;
@@ -154,14 +157,27 @@ void next_token() {
     else if (lookahead == '/') {
         token.type = TOKEN_DIV;
     }
-    else if (lookahead == '=') {
-        token.type = TOKEN_ASSIGN;
+    else if (lookahead == ':') {
+        next_char();
+        char ch = lookahead;
+        if (ch != '=') {
+            snprintf(fpl_error.msg, sizeof(fpl_error.msg), "Line %d, Column %d, %c.", line, col, lookahead);
+            fpl_error.type = ERROR_UNDEFINED_CHARACTER;
+
+            longjmp(jmpbuf, 1);
+        }
+        else {
+            token.type = TOKEN_ASSIGN;
+        }
     }
     else if (lookahead == EOF) {
         token.type = TOKEN_EOF;
     }
     else if (lookahead == '\n') {
         token.type = TOKEN_NL;
+    }
+    else if (lookahead == '=') {
+        token.type = TOKEN_EQ;
     }
     else {
         snprintf(fpl_error.msg, sizeof(fpl_error.msg), "Line %d, Column %d, %c.", line, col, lookahead);

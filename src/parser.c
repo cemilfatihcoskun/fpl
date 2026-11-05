@@ -3,13 +3,45 @@
 
 #include "fpl.h"
 
+struct Token saved_token;
+struct Token saved_token2;
+bool has_saved_token = false;
+bool use_saved_token = false;
+
+void peek() {
+    saved_token = token;
+    has_saved_token = true;
+    use_saved_token = true;
+    next_token();
+}
+
+void get_token() {
+    if (has_saved_token) {
+        if (use_saved_token) {
+            saved_token2 = token;
+            token = saved_token;
+            use_saved_token = false;
+        }
+        else {
+            has_saved_token = false;
+            token = saved_token2;
+        }
+    }
+    else {
+        next_token();
+    }
+    //token_print(token);
+}
+
 /* F = [0..9] */
 int parse_F() {
     // printf("fact\n");
     int val = 0;
 
     if (token.type == TOKEN_LPAREN) {
-        next_token();
+        get_token();
+        printf("\ta\t");
+        token_print(token);
 
         val = parse_E();
 
@@ -19,16 +51,18 @@ int parse_F() {
             snprintf(fpl_error.msg, sizeof(fpl_error.msg), "Parenthesis is not closed");
             longjmp(jmpbuf, 1);
         }
+        get_token();
     }
     else if (token.type == TOKEN_SYM) {
         val = symbols[token.name - 'a'];
-        next_token();
+        get_token();
     }
     else if (token.type == TOKEN_NUM) {
         val = token.val;
-        next_token();
+        get_token();
     }
     else if (token.type == TOKEN_MINUS) {
+        get_token();
         if (token.type != TOKEN_NUM) {
             snprintf(fpl_error.msg, sizeof(fpl_error.msg), "A number should come after");
             longjmp(jmpbuf, 1);
@@ -36,11 +70,14 @@ int parse_F() {
         val = -parse_F();
     }
     else if (token.type == TOKEN_PLUS) {
+        get_token();
         if (token.type != TOKEN_NUM) {
             snprintf(fpl_error.msg, sizeof(fpl_error.msg), "A number should come after");
             longjmp(jmpbuf, 1);
         }
         val = parse_F();
+    }
+    else if (token.type == TOKEN_EOF) {
     }
     else {
         fpl_error.type = ERROR_INCORRECT_GRAMMAR;
@@ -51,7 +88,7 @@ int parse_F() {
     return val;
 }
 
-/* T = F * F | F */
+/* T = F ('*' F)* */
 int parse_T() {
     // printf("term\n");
     int val = parse_F();
@@ -60,7 +97,7 @@ int parse_T() {
         if (token.type == TOKEN_DIV) {
             is_mul = false;
         }
-        next_token();
+        get_token();
 
         int right = parse_F();
         if (is_mul) {
@@ -80,7 +117,7 @@ int parse_T() {
     return val;
 }
 
-/* E = T + T | T */
+/* E = T ('+' T) */
 int parse_E() {
     // printf("expr\n");
     int val = parse_T();
@@ -90,7 +127,7 @@ int parse_E() {
         if (token.type == TOKEN_MINUS) {
             is_sum = false;
         }
-        next_token();
+        get_token();
 
         int right = parse_T();
         if (is_sum) {
@@ -106,18 +143,24 @@ int parse_E() {
 void parse_S() {
 }
 
+/* L = S | E */
 int parse_L() {
     int val = 0;
 
     if (token.type == TOKEN_SYM) {
+        peek();
         if (token.type == TOKEN_ASSIGN) {
             int index = token.name - 'a';
-            next_token();
+
+            get_token();
+            get_token();
+            get_token();
             int right = parse_E();
             symbols[index] = right;
             val = right;
         }
         else {
+            get_token();
             val = parse_E();
         }
     }
