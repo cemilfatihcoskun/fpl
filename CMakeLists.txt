@@ -9,30 +9,30 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 enable_testing()
 
-add_executable(fpl
+
+add_library(fpl_core
     src/fpl.c
+    src/vm.c
     src/lexer.c
     src/parser.c
-    src/main.c
 )
-
-target_include_directories(fpl
+target_include_directories(fpl_core
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-add_executable(fpl_tests
-    src/fpl.c
-    src/lexer.c
-    src/parser.c
+add_executable(fpl src/main.c)
+target_link_libraries(fpl PRIVATE fpl_core)
 
-    tests/test_lexer.c
+set(TEST_SUITES
+    test_lexer
+    test_vm
 )
 
-target_include_directories(fpl_tests
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+foreach(test_name ${TEST_SUITES})
+    add_executable(${test_name} tests/${test_name}.c)
+    target_link_libraries(${test_name} PRIVATE fpl_core)
+    add_test(NAME ${test_name} COMMAND ${test_name})
+endforeach()
 
-add_test(NAME CoreUnitTests COMMAND fpl_tests)
 

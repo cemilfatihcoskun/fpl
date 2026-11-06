@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 
+/* Lexer Parser */
 enum TokenType {
     TOKEN_NUM,
     TOKEN_SYM,
@@ -27,6 +28,25 @@ struct Token {
     char name;
 };
 
+extern struct Token token;
+
+#define SYMBOLS_SIZE 32
+extern int symbols[SYMBOLS_SIZE];
+
+void lexer_init(FILE *file);
+void next_char();
+void token_print(struct Token tok);
+void next_token();
+void lexer_recover();
+
+int parse_E();
+int parse_F();
+int parse_T();
+int parse_E();
+void parse_S();
+int parse_L();
+
+/* Error */
 enum ErrorType {
     /* Lexer Errors */
     ERROR_UNDEFINED_CHARACTER,
@@ -46,24 +66,45 @@ struct FPL_Error {
 
 extern struct FPL_Error fpl_error;
 
-#define SYMBOLS_SIZE 32
-extern int symbols[SYMBOLS_SIZE];
-extern struct Token token;
-
 extern jmp_buf jmpbuf;
 
-void lexer_init(FILE *file);
-void next_char();
-void token_print(struct Token tok);
-void next_token();
-void lexer_recover();
+/* Virtual Machine */
+#define STACK_MAX   256
+#define CODE_MAX    1024
+#define GLOBALS_MAX 256
 
-int parse_E();
-int parse_F();
-int parse_T();
-int parse_E();
-void parse_S();
-int parse_L();
+enum OpCode {
+    OP_PUSHINT,
+    OP_MUL,
+    OP_ADD,
+    OP_SUB,
+    OP_PRINT,
+    OP_JUMP,
+    OP_JUMPZERO,
+    OP_HALT,
+    OP_STORE,
+    OP_LOAD,
+    OP_DUP,
+};
+struct Vm {
+    int code[CODE_MAX];
+    int cp;
+    int ip;
+
+    int stack[STACK_MAX];
+    int sp;
+
+    int globals[GLOBALS_MAX];
+};
+
+void vm_init(struct Vm*);
+void vm_code_push(struct Vm *vm, int code);
+int vm_code_pop(struct Vm *vm);
+void vm_stack_push(struct Vm *vm, int data);
+int vm_stack_pop(struct Vm *vm);
+int vm_stack_peek(struct Vm *vm);
+void vm_run(struct Vm *vm);
+
 
 #endif
 
